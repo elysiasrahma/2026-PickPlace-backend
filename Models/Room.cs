@@ -2,7 +2,7 @@ namespace PickPlace.Api.Models;
 
 public class Room
 {
-    public string Id { get; set; }
+    public int? Id { get; set; }
     public string RoomName { get; set; } = string.Empty;
     public string Building { get; set; } = string.Empty;
     public string Facilities { get; set; } = string.Empty;

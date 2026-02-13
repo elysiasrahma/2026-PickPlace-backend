@@ -10,8 +10,8 @@ using PickPlace.Api.Data;
 
 namespace PickPlace.Api.Migrations
 {
-    [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20260213001149_InitialCreate")]
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260213042417_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,15 +19,18 @@ namespace PickPlace.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0-preview.1.25081.1")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
             modelBuilder.Entity("PickPlace.Api.Models.Room", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("varchar(255)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Building")
                         .IsRequired()
