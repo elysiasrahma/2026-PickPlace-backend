@@ -10,4 +10,7 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Room> Rooms { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
+
+public DbSet<PickPlace.Api.Models.Booking> Booking { get; set; } = default!;
 }
