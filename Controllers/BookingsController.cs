@@ -23,7 +23,7 @@ namespace PickPlace.Api.Controllers
 
         // GET: api/Bookings
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Booking>>> GetBookings(string? search, string? status)
+        public async Task<ActionResult<IEnumerable<Booking>>> GetBookings(string? search, string? status, bool? isHistory)
         {
             var query = _context.Bookings.Include(b => b.Room).AsQueryable();
 
@@ -32,12 +32,43 @@ namespace PickPlace.Api.Controllers
                 query = query.Where(b => b.BorrowerName.Contains(search) || b.Organization.Contains(search) || b.Purpose.Contains(search));
             }
 
-            if (!string.IsNullOrEmpty(status))
+            if (isHistory.Value == true)
             {
-                query = query.Where(b => b.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+                var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+
+                query = query.Where(b => b.EndTime < DateTime.Now && b.EndTime >= threeMonthsAgo);
+            }
+            else
+                {
+                    query = query.Where(b => b.EndTime >= DateTime.Now);
+                }
+
+            var bookingsList = await query.OrderByDescending(b => b.StartTime).ToListAsync();
+
+            foreach (var b in bookingsList)
+            {
+                // Cuma update kalau status aslinya "Approved"
+                if (b.Status == "Approved")
+                {
+                    if (DateTime.Now > b.EndTime)
+                    {
+                        b.Status = "Completed"; // Udah lewat -> Selesai
+                    }
+                    else if (DateTime.Now >= b.StartTime && DateTime.Now <= b.EndTime)
+                    {
+                        b.Status = "On Going"; // Sedang berlangsung -> Dipakai
+                    }
+                }
             }
 
-            return await query.OrderByDescending(b => b.StartTime).ToListAsync();
+            if (!string.IsNullOrEmpty(status))
+            {
+                bookingsList = bookingsList
+                    .Where(b => b.Status.Equals(status, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            return bookingsList;
         }
 
         // GET: api/Bookings/5
@@ -145,6 +176,12 @@ namespace PickPlace.Api.Controllers
 
             // Validasi Pilihan Status
             string[] allowedStatus = { "Approved", "Rejected", "Completed", "Canceled", "Pending" };
+
+            if (newStatus == "Canceled" && booking.StartTime < DateTime.Now)
+            {
+                return BadRequest("Tidak bisa membatalkan acara yang sudah lewat atau sedang berjalan!");
+            }
+
             if (!allowedStatus.Contains(newStatus))
             {
                 return BadRequest("Status tidak valid. Pilih: Approved, Rejected, Completed, Canceled");
