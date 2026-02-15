@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Security.Cryptography.X509Certificates;
+
 namespace PickPlace.Api.Models;
 
 public class Room
@@ -9,4 +12,5 @@ public class Room
     public string Issues { get; set; } = string.Empty;
     public int Capacity { get; set; } = 0;
     
+    public bool IsDeleted { get; set; } = false;
 }

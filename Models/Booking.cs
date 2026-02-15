@@ -28,5 +28,8 @@ namespace PickPlace.Api.Models
         public string Purpose { get; set; } = string.Empty;
 
         public string Status { get; set; } = "Pending";
+
+        public string? RejectReason { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }

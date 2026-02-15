@@ -36,6 +36,11 @@ namespace PickPlace.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Room>> PostRoom(Room room)
         {
+            bool nameExists = await _context.Rooms.AnyAsync(r => r.RoomName == room.RoomName);
+            if (nameExists)
+            {
+                return BadRequest($"Nama ruangan '{room.RoomName}' sudah ada! Gunakan nama lain.");
+            }
             _context.Rooms.Add(room);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
@@ -52,8 +57,18 @@ namespace PickPlace.Api.Controllers
                 return BadRequest();
             }
 
+            bool nameExists = await _context.Rooms
+                .AnyAsync(r => r.RoomName == room.RoomName && r.Id != id);
+                
+            if (nameExists)
+            {
+                return BadRequest($"Nama ruangan '{room.RoomName}' sudah digunakan ruangan lain.");
+            }
+
             // Tandai bahwa data ini sedang diedit
             _context.Entry(room).State = EntityState.Modified;
+
+            _context.Entry(room).Property(x => x.IsDeleted).IsModified = false;
 
             try
             {
@@ -82,7 +97,7 @@ namespace PickPlace.Api.Controllers
         {
             var room = await _context.Rooms.FindAsync(id);
             if (room == null) return NotFound();
-            _context.Rooms.Remove(room);
+            room.IsDeleted = true;
             await _context.SaveChangesAsync();
             return NoContent();
         }
