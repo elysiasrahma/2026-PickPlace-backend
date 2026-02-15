@@ -16,14 +16,12 @@ namespace PickPlace.Api.Controllers
             _context = context;
         }
 
-        // GET: api/Rooms (Lihat semua ruangan)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
         {
             return await _context.Rooms.ToListAsync();
         }
 
-        // GET: api/Rooms/5 (Lihat satu ruangan spesifik)
         [HttpGet("{id}")]
         public async Task<ActionResult<Room>> GetRoom(int id)
         {
@@ -32,7 +30,6 @@ namespace PickPlace.Api.Controllers
             return room;
         }
 
-        // POST: api/Rooms (Tambah ruangan baru)
         [HttpPost]
         public async Task<ActionResult<Room>> PostRoom(Room room)
         {
@@ -46,12 +43,9 @@ namespace PickPlace.Api.Controllers
             return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
         }
 
-        // PUT: api/Rooms/5
-        // Kodingan untuk mengedit data
         [HttpPut("{id}")]
         public async Task<IActionResult> PutRoom(int id, Room room)
         {
-            // Cek apakah ID di URL sama dengan ID di data JSON
             if (id != room.Id)
             {
                 return BadRequest();
@@ -65,19 +59,16 @@ namespace PickPlace.Api.Controllers
                 return BadRequest($"Nama ruangan '{room.RoomName}' sudah digunakan ruangan lain.");
             }
 
-            // Tandai bahwa data ini sedang diedit
             _context.Entry(room).State = EntityState.Modified;
 
             _context.Entry(room).Property(x => x.IsDeleted).IsModified = false;
 
             try
             {
-                // Simpan perubahan ke database
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Cek kalau datanya ternyata sudah dihapus duluan
                 if (!_context.Rooms.Any(e => e.Id == id))
                 {
                     return NotFound();
@@ -88,10 +79,9 @@ namespace PickPlace.Api.Controllers
                 }
             }
 
-            return NoContent(); // Berhasil, tapi tidak mengembalikan data apa-apa (Standar API)
+            return NoContent();
         }
 
-        // DELETE: api/Rooms/5 (Hapus ruangan)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
