@@ -19,7 +19,9 @@ namespace PickPlace.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
         {
-            return await _context.Rooms.ToListAsync();
+            return await _context.Rooms
+                .Where(r => !r.IsDeleted) 
+                .ToListAsync();
         }
 
         [HttpGet("{id}")]
