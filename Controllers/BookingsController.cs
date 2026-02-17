@@ -108,6 +108,7 @@ namespace PickPlace.Api.Controllers
             }
 
             _context.Entry(booking).State = EntityState.Modified;
+            _context.Entry(booking).Property(x => x.Status).IsModified = false;
 
             try
             {
@@ -133,6 +134,7 @@ namespace PickPlace.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(Booking booking)
         {
+
             var roomExists = await _context.Rooms.AnyAsync(r => r.Id == booking.RoomId);
             if (!roomExists)
             {
@@ -142,6 +144,18 @@ namespace PickPlace.Api.Controllers
             if (booking.EndTime <= booking.StartTime)
             {
                 return BadRequest("Jam selesai tidak boleh lebih awal dari jam mulai!");
+            }
+
+            bool isConflict = await _context.Bookings.AnyAsync(b =>
+                b.RoomId == booking.RoomId &&
+                b.Status == "Approved" &&
+                b.StartTime < booking.EndTime &&
+                b.EndTime > booking.StartTime
+            );
+
+            if (isConflict)
+            {
+                return BadRequest("Maaf, ruangan sudah dipinjam pada jam tersebut.");
             }
 
             booking.Status = "Pending";
