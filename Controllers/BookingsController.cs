@@ -95,9 +95,19 @@ namespace PickPlace.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(booking).State = EntityState.Modified;
+            var existingBooking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
 
-            _context.Entry(booking).Property(x => x.Status).IsModified = false;
+            if (existingBooking == null)
+            {
+                return NotFound();
+            }
+
+            if (existingBooking.Status != "Pending")
+            {
+                return BadRequest("Maaf, hanya pengajuan yang masih Pending yang boleh diedit.");
+            }
+
+            _context.Entry(booking).State = EntityState.Modified;
 
             try
             {
