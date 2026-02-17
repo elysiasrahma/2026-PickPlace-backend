@@ -29,34 +29,35 @@ namespace PickPlace.Api.Controllers
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(b => b.BorrowerName.Contains(search) || b.Organization.Contains(search) || b.Purpose.Contains(search));
+                query = query.Where(b =>
+                    (b.BorrowerName != null && b.BorrowerName.Contains(search)) ||
+                    (b.Organization != null && b.Organization.Contains(search)) ||
+                    (b.Purpose != null && b.Purpose.Contains(search)));
             }
 
-            if (isHistory.Value == true)
+            if (isHistory ?? false)
             {
                 var threeMonthsAgo = DateTime.Now.AddMonths(-3);
-
                 query = query.Where(b => b.EndTime < DateTime.Now && b.EndTime >= threeMonthsAgo);
             }
             else
-                {
-                    query = query.Where(b => b.EndTime >= DateTime.Now);
-                }
+            {
+                query = query.Where(b => b.EndTime >= DateTime.Now);
+            }
 
             var bookingsList = await query.OrderByDescending(b => b.StartTime).ToListAsync();
 
             foreach (var b in bookingsList)
             {
-                // Cuma update kalau status aslinya "Approved"
                 if (b.Status == "Approved")
                 {
                     if (DateTime.Now > b.EndTime)
                     {
-                        b.Status = "Completed"; // Udah lewat -> Selesai
+                        b.Status = "Completed";
                     }
                     else if (DateTime.Now >= b.StartTime && DateTime.Now <= b.EndTime)
                     {
-                        b.Status = "On Going"; // Sedang berlangsung -> Dipakai
+                        b.Status = "On Going";
                     }
                 }
             }
@@ -68,9 +69,8 @@ namespace PickPlace.Api.Controllers
                     .ToList();
             }
 
-            return bookingsList;
+            return Ok(bookingsList);
         }
-
         // GET: api/Bookings/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Booking>> GetBooking(int id)
@@ -95,9 +95,19 @@ namespace PickPlace.Api.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(booking).State = EntityState.Modified;
+            var existingBooking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
 
-             _context.Entry(booking).Property(x => x.Status).IsModified = false;
+            if (existingBooking == null)
+            {
+                return NotFound();
+            }
+
+            if (existingBooking.Status != "Pending")
+            {
+                return BadRequest("Maaf, hanya pengajuan yang masih Pending yang boleh diedit.");
+            }
+
+            _context.Entry(booking).State = EntityState.Modified;
 
             try
             {
